@@ -1,14 +1,36 @@
 # Path to your oh-my-zsh installation.
 # Reevaluate the prompt string each time it's displaying a prompt
 setopt prompt_subst
+setopt correct
+
+# History
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt share_history hist_ignore_dups hist_ignore_space
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 autoload bashcompinit && bashcompinit
 autoload -Uz compinit
 compinit
-source <(kubectl completion zsh)
-complete -C '/usr/local/bin/aws_completer' aws
+command -v kubectl >/dev/null && source <(kubectl completion zsh)
+command -v aws_completer >/dev/null && complete -C aws_completer aws
 
-source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# VI Mode!!! (beam cursor in insert, block in normal)
+bindkey -v
+bindkey jj vi-cmd-mode
+function zle-keymap-select {
+  if [[ ${KEYMAP} == vicmd ]] || [[ $1 = 'block' ]]; then
+    echo -ne '\e[1 q'
+  else
+    echo -ne '\e[5 q'
+  fi
+}
+zle -N zle-keymap-select
+zle-line-init() { echo -ne '\e[5 q' }
+zle -N zle-line-init
+preexec() { echo -ne '\e[5 q' }
+
+source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 bindkey '^w' autosuggest-execute
 bindkey '^e' autosuggest-accept
 bindkey '^u' autosuggest-toggle
@@ -20,9 +42,9 @@ eval "$(starship init zsh)"
 export STARSHIP_CONFIG=~/.config/starship/starship.toml
 
 # You may need to manually set your language environment
-export LANG=en_US.UTF-8
+export LANG=C.UTF-8
 
-export EDITOR=/opt/homebrew/bin/nvim
+export EDITOR=nvim
 
 alias la=tree
 alias cat=bat
@@ -59,17 +81,35 @@ alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
 
 # GO
-export GOPATH='/Users/omerxx/go'
+export GOPATH="$HOME/go"
 
 # VIM
-alias v="/Users/omerxx/.nix-profile/bin/nvim"
+alias v='fd --type f --hidden --exclude .git | fzf-tmux -p --reverse | xargs nvim'
+alias sv='fd --type f --hidden --exclude .git | fzf-tmux -p --reverse | xargs sudo -e'
 
-# Nmap
-alias nm="nmap -sC -sV -oN nmap"
-
-export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/omer/.vimpkg/bin:${GOPATH}/bin:/Users/omerxx/.cargo/bin
+export PATH=$HOME/.local/bin:${GOPATH}/bin:$HOME/.cargo/bin:/opt/nvim-linux-x86_64/bin:$HOME/.opencode/bin:$PATH:/snap/bin
 
 alias cl='clear'
+alias lg=lazygit
+alias help='tldr --list | fzf --preview "tldr {1} --color=always" --preview-window=right,70% | xargs tldr --color=always | less -R'
+
+# Disable XON/XOFF so Ctrl-s doesn't freeze the terminal
+stty -ixon
+
+# Node
+# nvm.sh takes ~600ms to load: put the default node on PATH right away
+# and only load nvm itself the first time `nvm` is called
+export NVM_DIR="$HOME/.nvm"
+_nvm_node=("$NVM_DIR"/versions/node/v$(cat "$NVM_DIR/alias/default" 2>/dev/null)*(N/nOn))
+(( $#_nvm_node )) || _nvm_node=("$NVM_DIR"/versions/node/v*(N/nOn))
+(( $#_nvm_node )) && export PATH="$_nvm_node[1]/bin:$PATH"
+unset _nvm_node
+nvm() {
+  unfunction nvm
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  nvm "$@"
+}
 
 # K8S
 export KUBECONFIG=~/.kube/config
@@ -91,34 +131,17 @@ alias podname=''
 # HTTP requests with xh!
 alias http="xh"
 
-# VI Mode!!!
-bindkey jj vi-cmd-mode
-
 # Eza
 alias l="eza -l --icons --git -a"
 alias lt="eza --tree --level=2 --long --icons --git"
 alias ltree="eza --tree --level=2  --icons --git"
 
-# SEC STUFF
-alias gobust='gobuster dir --wordlist ~/security/wordlists/diccnoext.txt --wildcard --url'
-alias dirsearch='python dirsearch.py -w db/dicc.txt -b -u'
-alias massdns='~/hacking/tools/massdns/bin/massdns -r ~/hacking/tools/massdns/lists/resolvers.txt -t A -o S bf-targets.txt -w livehosts.txt -s 4000'
-alias server='python -m http.server 4445'
-alias tunnel='ngrok http 4445'
-alias fuzz='ffuf -w ~/hacking/SecLists/content_discovery_all.txt -mc all -u'
-alias gr='~/go/src/github.com/tomnomnom/gf/gf'
-
 ### FZF ###
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-export PATH=/opt/homebrew/bin:$PATH
-
-alias mat='osascript -e "tell application \"System Events\" to key code 126 using {command down}" && tmux neww "cmatrix"'
-
 # Nix!
 export NIX_CONF_DIR=$HOME/.config/nix
-export PATH=/run/current-system/sw/bin:$PATH
 
 function ranger {
 	local IFS=$'\t\n'
@@ -140,7 +163,14 @@ alias rr='ranger'
 # navigation
 cx() { cd "$@" && l; }
 fcd() { cd "$(find . -type d -not -path '*/.*' | fzf)" && l; }
-f() { echo "$(find . -type f -not -path '*/.*' | fzf)" | pbcopy }
+# Clipboard: Windows on WSL, Wayland or X11 on native Linux
+clip() {
+  if command -v clip.exe >/dev/null; then clip.exe
+  elif [[ -n $WAYLAND_DISPLAY ]]; then wl-copy
+  else xclip -selection clipboard
+  fi
+}
+f() { echo "$(find . -type f -not -path '*/.*' | fzf)" | clip }
 fv() { nvim "$(find . -type f -not -path '*/.*' | fzf)" }
 
  # Nix
@@ -149,8 +179,14 @@ fv() { nvim "$(find . -type f -not -path '*/.*' | fzf)" }
  fi
  # End Nix
 
-export XDG_CONFIG_HOME="/Users/omerxx/.config"
+export XDG_CONFIG_HOME="$HOME/.config"
 
 eval "$(zoxide init zsh)"
-eval "$(atuin init zsh)"
+[ -f "$HOME/.atuin/bin/env" ] && . "$HOME/.atuin/bin/env"
+# Keep Claude Code's shell commands out of the atuin history
+[[ -z $CLAUDECODE ]] && eval "$(atuin init zsh)"
 eval "$(direnv hook zsh)"
+eval "$(pay-respects zsh --alias --nocnf)"
+
+# Ghost suggestion on empty prompt (next command / typo fix)
+source "${${(%):-%N}:A:h}/predict.zsh"

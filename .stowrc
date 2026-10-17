@@ -1,4 +1,12 @@
 --target=~/.config
 --ignore=.stowrc
 --ignore=DS_Store
---ignore=atuin/*
+--ignore=atuin
+--ignore=nvim
+--ignore=zshrc
+--ignore=nushell
+--ignore=nix
+--ignore=wezterm
+--ignore=ghostty
+--ignore=ssh
+--ignore=setup\.sh
