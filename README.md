@@ -1,10 +1,10 @@
 # Dotfiles
 
-Fork of [omerxx/dotfiles](https://github.com/omerxx/dotfiles), adapted for Ubuntu (WSL2 and native Linux).
+Fork de [omerxx/dotfiles](https://github.com/omerxx/dotfiles), adapté pour Ubuntu (WSL2 et Linux natif).
 
-## Fresh install
+## Installation sur une machine neuve
 
-### 1. Clone
+### 1. Cloner
 
 ```bash
 sudo apt install zsh git stow
@@ -12,78 +12,78 @@ git clone https://github.com/soleromel/dotfiles ~/apps/dotfiles
 cd ~/apps/dotfiles
 ```
 
-Keep the `~/apps/dotfiles` path: the tmux config refers to it.
+Garde le chemin `~/apps/dotfiles` : la config tmux y fait référence.
 
-### 2. Check requirements
+### 2. Vérifier les prérequis
 
 ```bash
 ./check-requirements.sh
 ```
 
-It lists every tool the configs rely on, and prints the `apt` command and the manual install steps for whatever is missing. It installs nothing. Run it again until everything is green.
+Le script liste tous les outils dont les configs ont besoin, puis affiche la commande `apt` et les étapes d'installation manuelle pour ce qui manque. Il n'installe rien. Relance-le jusqu'à ce que tout soit vert.
 
-On Debian/Ubuntu, `bat` and `fd` are installed as `batcat` and `fdfind`: the script prints the `ln -s` to run so the usual names work.
+Sous Debian/Ubuntu, `bat` et `fd` s'installent sous les noms `batcat` et `fdfind` : le script affiche le `ln -s` à lancer pour que les noms habituels fonctionnent.
 
-### 3. Back up your current configs
+### 3. Sauvegarder ta config actuelle
 
-`stow` refuses to overwrite existing files, but take a backup anyway:
+`stow` refuse d'écraser un fichier existant, mais fais quand même un backup :
 
 ```bash
 tar czf ~/dotfiles-backup-$(date +%F).tgz -C ~ .zshrc .zshenv .tmux.conf .config 2>/dev/null
 ```
 
-### 4. Link the configs
+### 4. Lier les configs
 
-`stow` links each top-level directory into `~/.config` (see `.stowrc`). Directories you want to keep your own version of, like `nvim`, are listed there as `--ignore`.
+`stow` crée un symlink de chaque dossier de premier niveau vers `~/.config` (voir `.stowrc`). Les dossiers dont tu veux garder ta propre version, comme `nvim`, y sont listés en `--ignore`.
 
 ```bash
-stow -n -v .   # dry run: shows what would be linked and any conflict
+stow -n -v .   # simulation : montre ce qui sera lié et les conflits éventuels
 stow -v .
 ```
 
-If a conflict shows up, move your own file out of the way first or add the directory to `.stowrc`.
+En cas de conflit, déplace d'abord ton fichier ou ajoute le dossier dans `.stowrc`.
 
 ### 5. Zsh
 
-The zsh config is not handled by stow, link it by hand and make zsh the default shell:
+La config zsh n'est pas gérée par stow : crée le lien à la main et fais de zsh le shell par défaut :
 
 ```bash
 ln -s ~/apps/dotfiles/zshrc/.zshrc ~/.zshrc
 chsh -s "$(command -v zsh)"
 ```
 
-Per-machine settings (tokens, project paths...) go in `~/.zshrc.local`, which is sourced last and never versioned.
+Les réglages propres à une machine (tokens, chemins de projets…) vont dans `~/.zshrc.local`. Il est chargé en dernier et n'est jamais versionné.
 
-### 6. Tmux plugins
+### 6. Plugins tmux
 
-Start tmux and press `prefix` + `I` to install the plugins (prefix is `Ctrl-s`).
+Lance tmux et appuie sur `prefix` + `I` pour installer les plugins (le prefix est `Ctrl-s`).
 
-## Layout
+## Organisation
 
-| Path | Content |
+| Chemin | Contenu |
 | --- | --- |
-| `zshrc/.zshrc` | Main zsh config, works on any Linux |
-| `zshrc/wsl.zsh` | WSL-only bits (Windows clipboard, `open`), loaded when `$WSL_DISTRO_NAME` is set |
-| `zshrc/predict.zsh` | Ghost suggestion on an empty prompt |
-| `check-requirements.sh` | Checks installed tools |
-| `.stowrc` | Stow target (`~/.config`) and ignored directories |
+| `zshrc/.zshrc` | Config zsh principale, fonctionne sur tout Linux |
+| `zshrc/wsl.zsh` | Spécifique à WSL (presse-papier Windows, `open`), chargé quand `$WSL_DISTRO_NAME` est défini |
+| `zshrc/predict.zsh` | Suggestion grisée sur un prompt vide |
+| `check-requirements.sh` | Vérifie les outils installés |
+| `.stowrc` | Cible de stow (`~/.config`) et dossiers ignorés |
 
-## Shell features
+## Fonctions du shell
 
-- **Ghost suggestion**: after a successful command, the command you usually run next shows up greyed out; after a failed one, the suggested fix. Accept with `Ctrl-e`, ignore by typing anything else.
-- `f`: pick a fix for the last failed command ([pay-respects](https://github.com/iffse/pay-respects)).
-- `Ctrl-x Ctrl-x`: fix the command line being typed.
-- `help`: browse [tldr](https://tldr.sh) pages with fzf (French first, English fallback).
-- `z` / `zi`: jump to a directory ([zoxide](https://github.com/ajeetdsouza/zoxide)).
-- `Ctrl-r`: search history ([atuin](https://atuin.sh)).
-- `fcp`: pick a file with fzf and copy its path to the clipboard.
-- `v`: pick a file with fzf and open it in nvim.
+- **Suggestion grisée** : après une commande réussie, la commande que tu lances habituellement ensuite apparaît en grisé ; après une erreur, la correction proposée. `Ctrl-e` pour l'accepter, tape autre chose pour l'ignorer.
+- `f` : choisir une correction pour la dernière commande ratée ([pay-respects](https://github.com/iffse/pay-respects)).
+- `Ctrl-x Ctrl-x` : corriger la ligne en cours de saisie.
+- `help` : parcourir les pages [tldr](https://tldr.sh) avec fzf (en français si disponible, sinon en anglais).
+- `z` / `zi` : aller dans un dossier ([zoxide](https://github.com/ajeetdsouza/zoxide)).
+- `Ctrl-r` : chercher dans l'historique ([atuin](https://atuin.sh)).
+- `fcp` : choisir un fichier avec fzf et copier son chemin dans le presse-papier.
+- `v` : choisir un fichier avec fzf et l'ouvrir dans nvim.
 
-## Updates from upstream
+## Récupérer les mises à jour d'omerxx
 
 ```bash
 git fetch upstream
-git log --oneline master..upstream/master   # see what changed
+git log --oneline master..upstream/master   # voir ce qui a changé
 ```
 
-Pushing to `upstream` is disabled, so changes only ever go to this fork.
+Le push vers `upstream` est désactivé : les modifications ne partent que vers ce fork.
