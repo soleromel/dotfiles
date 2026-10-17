@@ -170,7 +170,7 @@ clip() {
   else xclip -selection clipboard
   fi
 }
-f() { echo "$(find . -type f -not -path '*/.*' | fzf)" | clip }
+fcp() { echo "$(find . -type f -not -path '*/.*' | fzf)" | clip }
 fv() { nvim "$(find . -type f -not -path '*/.*' | fzf)" }
 
  # Nix
