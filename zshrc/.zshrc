@@ -163,10 +163,9 @@ alias rr='ranger'
 # navigation
 cx() { cd "$@" && l; }
 fcd() { cd "$(find . -type d -not -path '*/.*' | fzf)" && l; }
-# Clipboard: Windows on WSL, Wayland or X11 on native Linux
+# Clipboard: Wayland or X11 (overridden by wsl.zsh on WSL)
 clip() {
-  if command -v clip.exe >/dev/null; then clip.exe
-  elif [[ -n $WAYLAND_DISPLAY ]]; then wl-copy
+  if [[ -n $WAYLAND_DISPLAY ]]; then wl-copy
   else xclip -selection clipboard
   fi
 }
@@ -190,3 +189,9 @@ eval "$(pay-respects zsh --alias --nocnf)"
 
 # Ghost suggestion on empty prompt (next command / typo fix)
 source "${${(%):-%N}:A:h}/predict.zsh"
+
+# Windows-specific bits, only on WSL
+[[ -n $WSL_DISTRO_NAME ]] && source "${${(%):-%N}:A:h}/wsl.zsh"
+
+# Per-machine settings (tokens, project paths...), not versioned
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

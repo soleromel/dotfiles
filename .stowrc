@@ -10,3 +10,4 @@
 --ignore=ghostty
 --ignore=ssh
 --ignore=setup\.sh
+--ignore=check-requirements\.sh
