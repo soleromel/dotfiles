@@ -66,6 +66,18 @@ alias gcoall='git checkout -- .'
 alias gr='git remote'
 alias gre='git reset'
 
+# SSH agent: one agent shared by every shell (tmux panes, Claude Code...)
+# the key is unlocked once on first git use, then remembered until logout
+if [[ -z $SSH_AUTH_SOCK ]]; then
+  export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-$HOME/.ssh}/ssh-agent.sock"
+  ssh-add -l &>/dev/null
+  if (( $? == 2 )); then # no agent listening on the socket
+    rm -f "$SSH_AUTH_SOCK"
+    ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null
+  fi
+fi
+export GIT_SSH_COMMAND="ssh -o AddKeysToAgent=yes"
+
 # Docker
 alias dco="docker compose"
 alias dps="docker ps"
